@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>AZT Water Outlook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#faf8f4; --surface:#f3ede3; --ink:#1c1c1c; --ink2:#4a4540; --muted:#888; --grid:#e3d9cc; --axis:#cbbfae;
+  --forest:#2d4a3e; --forest-mid:#3d6454; --forest-dark:#1a2e26; --peach:#e87d5a; --peach-dark:#c8603e; --cream-dark:#ece4d8;
+  --s1:#3d6454; --pos:#2d4a3e; --neg:#c8603e; --mid:#f3ede3; --ring:#f3ede3;
+  --seq0:#ece4d8; --seq1:#b5c4b3; --seq2:#6f9484; --seq3:#3d6454; --seq4:#1a2e26;
+  --dry0:#ece4d8; --dry1:#f4c3ae; --dry2:#e87d5a; --dry3:#c8603e; --dry4:#8f3f24;
+  --serif:'Playfair Display',Georgia,'Times New Roman',serif; --sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+main{max-width:1100px;margin:0 auto;padding:24px 16px 64px}
+body.embed main{padding:0 0 8px}body.embed h1,body.embed .sub.lead{display:none}
+h1,h2{font-family:var(--serif);color:var(--forest);font-weight:700;border:0;padding:0} h1{font-size:28px;margin:0 0 4px} h2{font-size:19px;margin:0 0 4px} .sub{color:var(--ink2);margin:0 0 16px}
+.card{background:var(--surface);border:1px solid var(--grid);border-radius:14px;padding:16px;margin:16px 0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.tile{background:var(--surface);border:1px solid var(--grid);border-radius:12px;padding:12px 14px}
+.tile b{display:block;font-size:28px;line-height:1.1;color:var(--forest)}.tile span{color:var(--ink2);font-size:13px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+select,input,button{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--axis);border-radius:8px;padding:6px 10px}
+input{min-width:260px;flex:1}button{cursor:pointer}button[aria-pressed="true"]{background:var(--forest);color:#fff;border-color:var(--forest)}button:hover{border-color:var(--peach)}
+svg{display:block;width:100%;height:auto;overflow:visible}
+svg text{fill:var(--ink2);font-size:11px}.gridline{stroke:var(--grid);stroke-width:1}.axisline{stroke:var(--axis);stroke-width:1}
+.legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--ink2);font-size:13px;margin:4px 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.legend i.ln{width:16px;height:2px;border-radius:0;vertical-align:3px}
+#tip{position:fixed;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--axis);border-radius:8px;padding:8px 10px;font-size:13px;max-width:320px;box-shadow:0 4px 16px #0003;display:none;z-index:9}
+#tip small{color:var(--ink2);display:block}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--grid);vertical-align:top}th{color:var(--ink2);font-weight:600}
+.note{color:var(--muted);font-size:12.5px;margin-top:8px}
+#volNote{display:none;background:#fff;border:1px solid var(--peach);border-left-width:5px;border-radius:12px;padding:9px 12px;margin:6px 0 10px;font-size:14px;line-height:1.4}
+#volNote b{color:var(--peach-dark)}
+#tableWrap{max-height:340px;overflow:auto;display:none}
+.cell{cursor:default}
+</style>
+</head>
+<body>
+<main>
+<div id="tplBanner" role="note" style="display:none;background:#fff;border:1px solid var(--peach);border-left-width:5px;border-radius:12px;padding:9px 12px;margin:0 0 14px;font-size:14px;line-height:1.4"><b>Template data.</b> Everything below is synthetic sample data so the front end runs out of the box. It says nothing about any real trail. See the README for how to load your own.</div>
+<h1>AZT water outlook</h1>
+<p class="sub lead">When water is likely to be there on the Arizona Trail, source by source and week by week.</p>
+
+<section class="card">
+  <h2>Trail-wide: when is water there?</h2>
+  <p class="sub" id="ovSub"></p>
+  <div class="row" role="group" aria-label="Heatmap measure">
+    <button data-m="q" aria-pressed="true">Quantity</button>
+    <button data-m="dry" aria-pressed="false">Chance of dry</button>
+    <button data-m="s" aria-pressed="false">Sentiment</button>
+  </div>
+  <div id="heat"></div>
+  <div class="legend" id="heatLegend"></div>
+  <p class="note">Each cell is a 50-mile stretch of trail (left = Mexico border, right = Utah) in one month of a <b>typical year</b>. The model adjusts for which year each observation came from, so one wet year doesn't get mistaken for the season. Blank = not enough data.</p>
+</section>
+
+<section class="card">
+  <h2>One water source, by time of year</h2>
+  <div class="row">
+    <select id="wpSelect" aria-label="Water source" style="flex:1;min-width:260px"></select>
+    <button id="prev" aria-label="Previous source">&larr; Prev</button>
+    <button id="next" aria-label="Next source">Next &rarr;</button>
+    <button id="tblBtn" aria-pressed="false">Table view</button>
+  </div>
+  <div class="row"><input id="wpFilter" placeholder="Filter by name (e.g. Sample Tank)" aria-label="Filter sources by name" style="min-width:200px"><select id="secSel" aria-label="Section"></select></div>
+  <h2 id="wpTitle" style="margin-top:12px"></h2>
+  <p class="sub" id="wpMeta"></p>
+  <div id="volNote"><b>Varies a lot year to year.</b> Some years this source runs dry and others it flows well, so treat the typical-year curve as a rough guide. The shaded range is wider to show that spread.</div>
+  <div class="legend"><span><i class="ln" style="background:var(--peach-dark);height:3px"></i>Typical year (model)</span><span><i style="background:var(--peach);opacity:.3;border-radius:3px;width:16px"></i>Likely range (80%)</span></div>
+  <p class="note" style="margin-top:0">June to August has very little data, so that part of each curve is a rough guess. The band widens to show it.</p>
+  <h2 style="font-size:15px;margin-top:8px">Quantity</h2><div id="c1"></div>
+  <h2 style="font-size:15px;margin-top:8px">Chance of dry</h2><div id="c4"></div>
+  <h2 style="font-size:15px;margin-top:8px">Water quality <span style="font-weight:400;color:var(--ink2)">(where noted)</span></h2><div id="c3"></div>
+  <h2 style="font-size:15px;margin-top:8px">Sentiment</h2><div id="c2"></div>
+  <div id="tableWrap"></div>
+</section>
+
+<section class="card">
+  <h2>Wet and dry years</h2>
+  <p class="sub">Trail-wide, how each year compared with an average year after accounting for season and source. Lines show the 95% range from resampling sources.</p>
+  <h2 style="font-size:15px;margin-top:8px">Chance of dry (an average source in an average season = <span id="avgDry"></span>%)</h2><div id="y2"></div>
+  <p class="note">Hollow dot = limited data, so treat with caution. Green is better for hikers, orange is worse.</p>
+</section>
+
+<p class="note">These are model estimates for a typical year, not current conditions. Seasonal curves come from a regression with year as a fixed effect. A source with little data borrows from its 50-mile stretch and then the whole trail, and the shaded band is an approximate 80% range. Hover a chart to read the model at any date. Quantity: 0 dry, 1 stagnant/pools, 2 trickle, 3 flowing, 4 abundant. Don't use this as your only water information.</p>
+</main>
+<div id="tip"></div>
+<script src="data.js?v=1"></script>
+<script>
+if(window.TEMPLATE_DATA)document.getElementById("tplBanner").style.display="block";
+const WP=window.AZT_WP;
+const SEC=window.AZT_MODEL.secs.map(x=>x[0]);
+const QL=['Dry','Stagnant','Trickle','Flowing','Abundant'];
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const $=s=>document.querySelector(s), css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const NS='http://www.w3.org/2000/svg';
+const tip=$('#tip');
+function showTip(e,html){tip.innerHTML=html;tip.style.display='block';const w=tip.offsetWidth,h=tip.offsetHeight;let x=e.clientX+14,y=e.clientY+14;if(x+w>innerWidth-8)x=e.clientX-w-14;if(y+h>innerHeight-8)y=e.clientY-h-14;tip.style.left=x+'px';tip.style.top=y+'px'}
+function hideTip(){tip.style.display='none'}
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function el(n,a,p){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+function txt(p,x,y,s,anchor,extra){const t=el('text',Object.assign({x,y,'text-anchor':anchor||'start'},extra||{}),p);t.textContent=s;return t}
+
+/* ---------- tiles ---------- */
+
+/* ---------- shared helpers ---------- */
+const M=window.AZT_MODEL;
+const SEQ=['--seq0','--seq1','--seq2','--seq3','--seq4'],DRY=['--dry0','--dry1','--dry2','--dry3','--dry4'];
+function hexToRgb(h){h=h.replace('#','');return[0,2,4].map(i=>parseInt(h.substr(i,2),16))}
+function mix(a,b,t){const A=hexToRgb(a),B=hexToRgb(b);return'#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join('')}
+function ramp(stops,t){t=Math.max(0,Math.min(1,t));const x=t*(stops.length-1),i=Math.min(stops.length-2,Math.floor(x));return mix(stops[i],stops[i+1],x-i)}
+function heatColor(m,v){
+  if(m=='q')return ramp(SEQ.map(css),v/4);
+  if(m=='dry')return ramp(DRY.map(css),v/0.6);
+  const mid=css('--mid');return v>=0?ramp([mid,css('--pos')],v/1.2):ramp([mid,css('--neg')],-v/1.2);
+}
+const MD=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const dateOfDoy=d=>{const t=new Date(Date.UTC(2015,0,d));return MD[t.getUTCMonth()]+' '+t.getUTCDate()};
+const pm=v=>(v>=0?'+':'−')+Math.abs(v).toFixed(2);
+
+/* ---------- heatmap (modeled typical year) ---------- */
+const BIN=50, NB=M.heat.q[0].length;
+const TM=m=>m;
+let heatMode='q';
+const HK={q:'q',dry:'d',s:'s'}, MROWS=[0,1,2,3,4,5,6,7,8,9,10,11];
+function drawHeat(){
+  const host=$('#heat');host.innerHTML='';
+  const L=34,T=6,cw=40,ch=22,W=L+NB*cw+4,Hh=T+MROWS.length*ch+34;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${Hh}`,role:'img','aria-label':'Modeled water by trail mile and month'},host);
+  MROWS.forEach((mi,r)=>txt(svg,L-6,T+r*ch+ch/2+4,MON[mi],'end'));
+  for(let b=0;b<NB;b+=2)txt(svg,L+b*cw,T+MROWS.length*ch+14,Math.round(TM(b*BIN)),'start');
+  txt(svg,L,T+MROWS.length*ch+30,'Trail mile (Mexico border = 0)','start');
+  const data=M.heat[HK[heatMode]];
+  MROWS.forEach((mi,r)=>{for(let b=0;b<NB;b++){
+    const v=data[mi][b]; if(v==null)continue;
+    const val=heatMode=='dry'?v/100:v;
+    const label=heatMode=='q'?`Modeled quantity ${v.toFixed(2)} of 4`:heatMode=='dry'?`Modeled chance of dry ${Math.round(v)}%`:`Modeled sentiment ${v>=0?'+':'−'}${Math.abs(v).toFixed(2)} (−2..+2)`;
+    const rc=el('rect',{x:L+b*cw+1,y:T+r*ch+1,width:cw-2,height:ch-2,rx:3,fill:heatColor(heatMode,val),class:'cell'},svg);
+    rc.addEventListener('mousemove',e=>showTip(e,`<b>Miles ${Math.round(TM(b*BIN))}–${Math.round(TM(b*BIN+BIN))}, ${MON[mi]}</b><small>${label}</small>`));
+    rc.addEventListener('mouseleave',hideTip);
+  }});
+  const lg=$('#heatLegend');const stops=heatMode=='s'?[-1,-.5,0,.5,1]:heatMode=='dry'?[0,.15,.3,.45,.6]:[0,1,2,3,4];
+  lg.innerHTML=stops.map(v=>`<span><i style="background:${heatColor(heatMode,v)};border-radius:3px"></i>${heatMode=='dry'?Math.round(v*100)+'%':heatMode=='s'?(v>0?'+':'')+v:v}</span>`).join('')+`<span style="color:var(--muted)">${heatMode=='q'?'quantity: 0 dry → 4 abundant':heatMode=='dry'?'modeled chance the source is dry':'orange negative → green positive'}</span>`;
+  $('#ovSub').textContent=heatMode=='q'?'Modeled water quantity by stretch of trail and month, for a typical year.':heatMode=='dry'?'Modeled chance that the source is dry, for a typical year.':'Modeled sentiment about sources by stretch and month, for a typical year.';
+}
+document.querySelectorAll('[data-m]').forEach(b=>b.addEventListener('click',()=>{heatMode=b.dataset.m;document.querySelectorAll('[data-m]').forEach(x=>x.setAttribute('aria-pressed',x===b));drawHeat()}));
+
+/* ---------- waypoint explorer ---------- */
+let idxList=[],cur=0;
+const label=i=>`mi ${WP[i][1].toFixed(0)} – ${WP[i][0]} (${SEC[WP[i][2]]})`;
+function buildList(){
+  const sec=$('#secSel').value,f=$('#wpFilter').value.trim().toLowerCase();
+  idxList=WP.map((w,i)=>i).filter(i=>(sec==='all'||WP[i][2]==+sec)&&(!f||WP[i][0].toLowerCase().includes(f)));
+  $('#wpSelect').innerHTML=idxList.length?idxList.map(i=>`<option value="${i}">${esc(label(i))}</option>`).join(''):'<option value="">No matching sources</option>';
+  if(idxList.includes(cur))$('#wpSelect').value=cur;
+}
+$('#secSel').innerHTML='<option value="all">All sections</option>'+SEC.map((s,i)=>`<option value="${i}">${s}</option>`).join('');
+function pick(i){if(i==null)return;cur=i;if(idxList.includes(i))$('#wpSelect').value=i;drawWp()}
+$('#secSel').addEventListener('change',()=>{buildList();pick(idxList[0])});
+$('#wpSelect').addEventListener('change',e=>{if(e.target.value!=='')pick(+e.target.value)});
+$('#wpFilter').addEventListener('input',()=>{buildList();if(idxList.length&&!idxList.includes(cur))pick(idxList[0])});
+$('#prev').onclick=()=>{const p=idxList.indexOf(cur);pick(idxList[(p-1+idxList.length)%idxList.length])};
+$('#next').onclick=()=>{const p=idxList.indexOf(cur);pick(idxList[(p+1)%idxList.length])};
+$('#tblBtn').onclick=e=>{const on=e.target.getAttribute('aria-pressed')!='true';e.target.setAttribute('aria-pressed',on);$('#tableWrap').style.display=on?'block':'none';if(on)drawTable()};
+
+const X0=15,X1=356,MSTART=[15,32,60,91,121,152,182,213,244,274,305,335];
+function seasonChart(host,o){
+  host.innerHTML='';
+  const W=900,Hh=o.h||190,L=64,R=14,T=10,B=26;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${Hh}`,role:'img','aria-label':o.aria},host);
+  const X=d=>L+(d-X0)/(X1-X0)*(W-L-R),Y=v=>T+(o.max-v)/(o.max-o.min)*(Hh-T-B);
+  o.ticks.forEach(([v,lab])=>{el('line',{x1:L,x2:W-R,y1:Y(v),y2:Y(v),class:'gridline'},svg);txt(svg,L-8,Y(v)+4,lab,'end')});
+  MSTART.forEach((d,i)=>{if(i>0)el('line',{x1:X(d),x2:X(d),y1:T,y2:Hh-B,class:'gridline'},svg);txt(svg,X(d)+(X(i<11?MSTART[i+1]:X1)-X(d))/2,Hh-8,MD[i],'middle')});
+  el('line',{x1:L,x2:W-R,y1:Hh-B,y2:Hh-B,class:'axisline'},svg);
+  const g=M.grid,mean=o.mean,hw=o.hw;
+  const clip=v=>Math.max(o.min,Math.min(o.max,v));
+  let up='',dn='';g.forEach((d,i)=>{up+=(i?'L':'M')+X(d)+','+Y(clip(mean[i]+hw[i]))});for(let i=g.length-1;i>=0;i--)dn+='L'+X(g[i])+','+Y(clip(mean[i]-hw[i]));
+  el('path',{d:up+dn+'Z',fill:css('--peach'),'fill-opacity':.25,stroke:'none'},svg);
+  el('path',{d:g.map((d,i)=>(i?'L':'M')+X(d)+','+Y(clip(mean[i]))).join(''),fill:'none',stroke:css('--peach-dark'),'stroke-width':2.5,'stroke-linejoin':'round'},svg);
+  const guide=el('line',{y1:T,y2:Hh-B,stroke:css('--ink2'),'stroke-width':1,'stroke-dasharray':'3 3',visibility:'hidden'},svg);
+  const ov=el('rect',{x:L,y:T,width:W-L-R,height:Hh-T-B,fill:'transparent'},svg);
+  ov.addEventListener('mousemove',e=>{const bb=svg.getBoundingClientRect(),px=(e.clientX-bb.left)/bb.width*W;const d=X0+(px-L)/(W-L-R)*(X1-X0);
+    let k=0,best=1e9;g.forEach((gd,i)=>{if(Math.abs(gd-d)<best){best=Math.abs(gd-d);k=i}});
+    guide.setAttribute('x1',X(g[k]));guide.setAttribute('x2',X(g[k]));guide.setAttribute('visibility','visible');
+    showTip(e,`<b>${dateOfDoy(g[k])}</b><small>Typical year: ${o.fmt(mean[k])}</small><small>Likely range: ${o.fmt(Math.max(o.min,mean[k]-hw[k]))} to ${o.fmt(Math.min(o.max,mean[k]+hw[k]))}</small>`)});
+  ov.addEventListener('mouseleave',()=>{guide.setAttribute('visibility','hidden');hideTip()});
+}
+function drawWp(){
+  const w=WP[cur],q=M.m.q[cur],d=M.m.d[cur],vol=M.vol[cur];
+  const widen=(a,x)=>x?a.map(v=>Math.sqrt(v*v+x*x)):a, hwq=widen(M.h.q[cur],vol?1.28*vol[0]:0), hwd=widen(M.h.d[cur],vol?128*vol[1]:0);
+  $('#volNote').style.display=vol?'block':'none';
+  $('#wpTitle').textContent=w[0];
+  const iw=q.indexOf(Math.max(...q)),id=d.indexOf(Math.max(...d));
+  $('#wpMeta').textContent=`Mile ${w[1].toFixed(1)} \u00b7 ${SEC[w[2]]}${w[5]!=null?' \u00b7 '+Math.round(w[5]*3.281).toLocaleString()+' ft':''} \u00b7 Model: most water around ${dateOfDoy(M.grid[iw])}, driest odds around ${dateOfDoy(M.grid[id])} (${d[id]}%)`;
+  seasonChart($('#c1'),{mean:q,hw:hwq,min:-.4,max:4.4,h:210,ticks:QL.map((l,i)=>[i,l]),aria:'Quantity by time of year',fmt:v=>v.toFixed(1)+' ('+QL[Math.max(0,Math.min(4,Math.round(v)))]+')'});
+  seasonChart($('#c4'),{mean:d,hw:hwd,min:0,max:Math.max(30,Math.ceil(Math.max(...d.map((v,i)=>v+hwd[i]))/10)*10),h:150,ticks:[0,10,20,30,40,50,60,70,80,90,100].filter(v=>v<=Math.max(30,Math.ceil(Math.max(...d.map((v2,i)=>v2+hwd[i]))/10)*10)).map(v=>[v,v+'%']),aria:'Chance of dry by time of year',fmt:v=>Math.round(v)+'%'});
+  seasonChart($('#c3'),{mean:M.m.ql[cur],hw:M.h.ql[cur],min:-1.4,max:1.4,h:150,ticks:[[-1,'Poor'],[0,'Mixed'],[1,'Good']],aria:'Water quality by time of year',fmt:v=>(v>=0?'+':'−')+Math.abs(v).toFixed(2)});
+  seasonChart($('#c2'),{mean:M.m.s[cur],hw:M.h.s[cur],min:-2.2,max:2.2,h:170,ticks:[[-2,'−2'],[-1,'−1'],[0,'0'],[1,'+1'],[2,'+2']],aria:'Sentiment by time of year',fmt:v=>(v>=0?'+':'−')+Math.abs(v).toFixed(2)});
+  if($('#tblBtn').getAttribute('aria-pressed')=='true')drawTable();
+}
+function drawTable(){
+  const g=M.grid,q=M.m.q[cur],d=M.m.d[cur],ql=M.m.ql[cur],se=M.m.s[cur];
+  let rowsH='';for(let i=0;i<g.length;i+=2)rowsH+=`<tr><td>${dateOfDoy(g[i])}</td><td>${q[i].toFixed(1)}</td><td>${d[i]}%</td><td>${pm(ql[i])}</td><td>${pm(se[i])}</td></tr>`;
+  $('#tableWrap').innerHTML='<table><caption style="text-align:left;color:var(--ink2);padding:4px 8px">Modeled typical year, every two weeks</caption><thead><tr><th>Date</th><th>Quantity (0\u20134)</th><th>Chance of dry</th><th>Quality</th><th>Sentiment</th></tr></thead><tbody>'+rowsH+'</tbody></table>';
+}
+
+/* ---------- year effects ---------- */
+function yearChart(host,k,o){
+  host.innerHTML='';const Y=M.years,e=Y[k];const W=900,Hh=190,L=64,R=14,T=10,B=28,n=Y.labels.length;
+  const svg=el('svg',{viewBox:`0 0 ${W} ${Hh}`,role:'img','aria-label':o.aria},host);
+  const Yv=v=>T+(o.max-v)/(o.max-o.min)*(Hh-T-B),Xc=i=>L+(i+.5)/n*(W-L-R);
+  o.ticks.forEach(([v,lab])=>{el('line',{x1:L,x2:W-R,y1:Yv(v),y2:Yv(v),class:'gridline'},svg);txt(svg,L-8,Yv(v)+4,lab,'end')});
+  el('line',{x1:L,x2:W-R,y1:Yv(o.base),y2:Yv(o.base),stroke:css('--ink2'),'stroke-width':1.2},svg);
+  Y.labels.forEach((lab,i)=>{
+    const x=Xc(i);txt(svg,x,Hh-10,lab,'middle');
+    el('line',{x1:x,x2:x,y1:Yv(e.lo[i]),y2:Yv(e.hi[i]),stroke:css('--ink2'),'stroke-width':2},svg);
+    const good=o.better(e.eff[i],o.base);const col=css(good?'--forest-mid':'--peach-dark');const few=Y.few[i];
+    const c=el('circle',{cx:x,cy:Yv(e.eff[i]),r:6,fill:few?css('--surface'):col,stroke:col,'stroke-width':2.5},svg);
+    c.addEventListener('mousemove',ev=>showTip(ev,`<b>${lab}</b><small>${o.fmt(e.eff[i])} (95% range ${o.fmt(e.lo[i])} to ${o.fmt(e.hi[i])})</small>${few?'<small>Limited data \u2013 interpret with care</small>':''}`));
+    c.addEventListener('mouseleave',hideTip);
+  });
+}
+const YB=M.years.d.eff.reduce((a,v,i)=>a+v*M.years.n[i],0)/M.years.n.reduce((a,v)=>a+v,0);
+$('#avgDry').textContent=Math.round(YB);
+yearChart($('#y2'),'d',{base:YB,min:0,max:35,ticks:[[0,'0%'],[5,'5%'],[10,'10%'],[15,'15%'],[20,'20%'],[25,'25%'],[30,'30%']],aria:'Year effect on chance of dry',fmt:v=>v.toFixed(1)+'%',better:(v,b)=>v<=b});
+buildList();
+drawHeat();pick(M.def);
+if(location.search.includes('embed=1')||parent!==window)document.body.classList.add('embed');
+function postH(){try{parent.postMessage({aztWaterHeight:document.documentElement.scrollHeight},'*')}catch(e){}}
+new ResizeObserver(postH).observe(document.body);addEventListener('load',postH);
+</script>
+</body>
+</html>

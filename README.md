@@ -1,0 +1,60 @@
+# Trail Water Explorer
+
+Front-end source for a set of seasonal water-availability viewers for long trails. They show, source by source and week by week, how likely water is to be there in a typical year:
+
+- **`cdt-water/`** is the desktop explorer: a trail-wide heatmap (quantity, chance of dry, sentiment by 50-mile stretch and month), a per-source seasonal curve with an uncertainty band, a table view, and wet-year/dry-year effects.
+- **`azt-water/`** is the same explorer, set up for a shorter trail with named sections.
+- **`cdt-water-app/`** is an offline-capable phone app (PWA). It draws the route and sources on a canvas (no base map needed), colors each source by its chance of good water on the chosen date, optionally follows your GPS dot, and lists the next water ahead with a probability bar.
+
+Everything is plain HTML, CSS and JavaScript with no build step and no dependencies. Charts are hand-written SVG.
+
+## Template data only
+
+This repo ships **synthetic placeholder data**, not real trail data. Every source is named `Sample ...`, every number comes from a made-up smooth curve, and each page shows a "template data" notice. The modeling pipeline that produces real numbers is not part of this repo.
+
+The data formats are documented in [`docs/DATA_FORMAT.md`](docs/DATA_FORMAT.md), and [`scripts/make_template_data.py`](scripts/make_template_data.py) regenerates the samples:
+
+```bash
+python3 scripts/make_template_data.py
+```
+
+To use the front ends with your own data, write files in the same shape and drop them over `cdt-water/data.js`, `azt-water/data.js` and `cdt-water-app/data.json`. If you build a dataset from someone else's material, check its terms before you publish it.
+
+## Run it
+
+Serve the repo root with any static server and open a page:
+
+```bash
+python3 -m http.server 8000
+# http://localhost:8000/cdt-water/
+# http://localhost:8000/azt-water/
+# http://localhost:8000/cdt-water-app/
+```
+
+A service worker (the offline app) needs `localhost` or `https://`.
+
+## Layout
+
+| Path | What it is |
+|:-|:-|
+| `cdt-water/index.html`, `data.js` | Desktop explorer and its data |
+| `azt-water/index.html`, `data.js` | Second explorer and its data |
+| `cdt-water-app/` | PWA: `index.html`, `app.js`, `sw.js`, `manifest.webmanifest`, icons, `data.json`, `bump-version.sh`, `.htaccess` |
+| `scripts/make_template_data.py` | Writes the synthetic sample data |
+| `docs/DATA_FORMAT.md` | Field-by-field data reference |
+
+## Embedding
+
+Add `?embed=1` to a tool page, or load it in an iframe, to hide the title. The page posts its height to the parent window (`{cdtWaterHeight: n}` or `{aztWaterHeight: n}`) so the parent can resize the frame.
+
+## Adapting to another trail
+
+The pages are written for a south-to-north route, so a few labels are hard-coded: the section names (`SEC` in `cdt-water/index.html`), "Trail mile (southern terminus = 0)", and the CDT/AZT titles. Search for those and change them. The month range shown (Apr to Oct for the first explorer, the whole year for the second) is set by `grid`, `MROWS` and `MSTART` in each page.
+
+## Caveats
+
+Model estimates are not current conditions. A viewer like this should never be anyone's only water information, and the pages say so.
+
+## License
+
+MIT. See `LICENSE`.

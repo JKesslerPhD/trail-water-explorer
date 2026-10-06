@@ -1,0 +1,5 @@
+# Keep the files that decide "what version is installed" fresh; everything else is versioned via ?v=
+<FilesMatch "^(sw\.js|index\.html|manifest\.webmanifest)$">
+  Header set Cache-Control "no-cache"
+</FilesMatch>
+AddType application/manifest+json .webmanifest

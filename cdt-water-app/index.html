@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>CDT Water</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2d4a3e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CDT Water">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#faf8f4; --card:#f3ede3; --ink:#1c1c1c; --ink2:#4a4540; --muted:#888; --line:#e3d9cc; --axis:#cbbfae;
+  --forest:#2d4a3e; --forest-mid:#3d6454; --forest-dark:#1a2e26; --peach:#e87d5a; --peach-dark:#c8603e;
+  --serif:Georgia,'Times New Roman',serif; --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--sans);overscroll-behavior:none}
+#app{display:flex;flex-direction:column;height:100%;height:100dvh}
+header{background:var(--forest);color:#fff;padding:calc(8px + var(--safe-t)) 12px 8px;flex:none}
+.top{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.top h1{font:700 18px var(--serif);margin:0;letter-spacing:.2px}
+#status{font-size:12px;opacity:.9;text-align:right}
+.ctl{display:flex;gap:8px;margin-top:6px;align-items:center;flex-wrap:wrap}
+.ctl label{font-size:12px;opacity:.85}
+input[type=date],select,button{font:inherit;font-size:14px;border-radius:8px;border:1px solid var(--axis);background:#fff;color:var(--ink);padding:5px 8px}
+header button{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.35)}
+header button[aria-pressed=true]{background:var(--peach);border-color:var(--peach);color:#fff}
+main{flex:1;position:relative;min-height:0;overflow:hidden}
+#mapView,#listView{position:absolute;inset:0}
+#mapView canvas{width:100%;height:100%;display:block;touch-action:none;background:var(--bg)}
+#listView{overflow-y:auto;padding:10px 12px 20px;display:none;-webkit-overflow-scrolling:touch}
+.fab{position:absolute;right:10px;display:flex;flex-direction:column;gap:6px}
+.fab button{width:42px;height:42px;font-size:20px;padding:0;box-shadow:0 2px 8px #0003}
+#legend{position:absolute;left:8px;top:8px;background:#faf8f4e8;border:1px solid var(--line);border-radius:10px;padding:6px 8px;font-size:11.5px;color:var(--ink2)}
+#legend .bar{height:8px;border-radius:4px;margin:3px 0 2px;width:130px;background:linear-gradient(90deg,#c8603e,#e8c9a8,#8fb09c,#2d4a3e)}
+#legend .lab{display:flex;justify-content:space-between}
+nav{display:flex;flex:none;background:var(--card);border-top:1px solid var(--line);padding-bottom:var(--safe-b)}
+nav button{flex:1;border:0;border-radius:0;background:transparent;padding:11px 4px;font-weight:600;color:var(--ink2)}
+nav button[aria-selected=true]{color:var(--forest);box-shadow:inset 0 -3px 0 var(--peach)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);border-radius:16px 16px 0 0;box-shadow:0 -6px 24px #0003;padding:12px 14px 16px;display:none;max-height:62%;overflow:auto;z-index:5}
+.sheet h2{font:700 17px var(--serif);margin:0 24px 2px 0;color:var(--forest)}
+.sheet .x{position:absolute;right:8px;top:6px;border:0;background:transparent;font-size:22px;padding:4px 10px}
+.meta{color:var(--ink2);font-size:13px;margin-bottom:6px}
+.row{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 11px;margin:8px 0}
+.row .hd{display:flex;gap:8px;align-items:baseline;justify-content:space-between}
+.row .nm{font-weight:650}.row .dm{color:var(--ink2);font-size:13px;white-space:nowrap}
+.row .sub{color:var(--ink2);font-size:12.5px;margin-top:2px}
+.dist{display:flex;height:11px;border-radius:6px;overflow:hidden;margin:7px 0 3px;background:var(--line)}
+.dist i{display:block;height:100%}
+.pct{font-weight:700}
+.gap{color:var(--muted);font-size:12px;text-align:center;margin:2px 0}
+h3{font:700 13px var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--ink2);margin:14px 0 2px}
+.you{background:var(--forest);color:#fff;border-radius:12px;padding:10px 12px}
+.you b{font-size:17px}
+.you small{opacity:.85;display:block}
+.you input[type=range]{width:100%;margin-top:6px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink2)}
+.chip i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.warn{background:#fff3ec;border:1px solid #f1c7b3;border-radius:10px;padding:8px 10px;font-size:12.5px;color:#7a3a22;margin:8px 0}
+.set label{display:flex;gap:8px;align-items:center;margin:10px 0;font-size:14px}
+.set .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+svg text{fill:var(--ink2);font:10.5px var(--sans)}
+#install{display:none;align-items:center;gap:8px;background:#fff;border-bottom:1px solid var(--line);border-left:5px solid var(--peach);padding:8px 10px;font-size:13.5px;line-height:1.35;flex:none}
+#install .t{flex:1}#install .t small{display:block;color:var(--ink2);font-size:12.5px;margin-top:1px}
+#install .go{background:var(--forest);color:#fff;border-color:var(--forest);font-weight:700;white-space:nowrap}
+#install .x{border:0;background:transparent;font-size:22px;line-height:1;padding:2px 6px;color:var(--ink2)}
+.vnote{background:#fff3ec;border:1px solid #f1c7b3;border-left:4px solid var(--peach);border-radius:10px;padding:7px 10px;font-size:13px;margin:6px 0}
+#toast{position:fixed;left:50%;bottom:calc(70px + var(--safe-b));transform:translateX(-50%);background:var(--forest-dark);color:#fff;padding:8px 14px;border-radius:20px;font-size:13px;display:none;z-index:20}
+#off{display:none;background:var(--peach-dark);color:#fff;font-size:12px;text-align:center;padding:2px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="top"><h1>CDT Water</h1><div id="status">loading&hellip;</div></div>
+    <div class="ctl">
+      <label for="date">Date</label><input type="date" id="date">
+      <button id="dir" aria-pressed="false" title="Direction of travel">NOBO</button>
+      <button id="filt" aria-pressed="false" title="Only show sources likely to have good water">Good only</button>
+    </div>
+  </header>
+  <div id="install" role="region" aria-label="Install for offline use"><div class="t" id="installText"></div><button class="go" id="installGo" style="display:none">Install</button><button class="x" id="installX" aria-label="Dismiss">&times;</button></div>
+  <div id="off">Offline &mdash; everything still works</div>
+  <main>
+    <section id="mapView" aria-label="Map">
+      <canvas id="cv"></canvas>
+      <div id="legend"><div class="lab"><b>Chance of good water</b></div><div class="bar"></div><div class="lab"><span>0%</span><span>50%</span><span>100%</span></div></div>
+      <div class="fab" id="fab" style="bottom:12px">
+        <button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">&minus;</button>
+        <button id="me" aria-label="Center on my position" title="Center on me">&#9678;</button>
+        <button id="fit" aria-label="Show whole trail" title="Whole trail">&#8693;</button>
+      </div>
+      <div class="sheet" id="sheet"><button class="x" id="sheetx" aria-label="Close">&times;</button><div id="sheetBody"></div></div>
+    </section>
+    <section id="listView" aria-label="Water sources near you"></section>
+    <section class="sheet" id="setView" style="max-height:100%;border-radius:0;display:none"><button class="x" id="setx" aria-label="Close">&times;</button><div id="setBody"></div></section>
+  </main>
+  <nav role="tablist">
+    <button role="tab" id="tMap" aria-selected="true">Map</button>
+    <button role="tab" id="tList" aria-selected="false">Next water</button>
+    <button role="tab" id="tSet" aria-selected="false">Settings</button>
+  </nav>
+</div>
+<div id="toast"></div>
+<script>window.APP_V='1';</script>
+<script src="app.js?v=1"></script>
+</body>
+</html>
