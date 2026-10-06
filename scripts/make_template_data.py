@@ -20,8 +20,8 @@ sig = lambda x: 1 / (1 + math.exp(-x))
 clamp = lambda v, a, b: max(a, min(b, v))
 MON_MID = [15, 46, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349]   # mid-month day of year
 
-SRC_TYPES = ["Spring", "Creek", "Stream", "Water Tank", "Windmill", "Cache Box", "Lake", "Pond", "Trough", "River"]
-BASE_BY_TYPE = {"Spring": 2.6, "Creek": 2.8, "Stream": 2.7, "Water Tank": 2.0, "Windmill": 1.9, "Cache Box": 1.6,
+SRC_TYPES = ["Spring", "Creek", "Stream", "Tank", "Windmill", "Cache", "Lake", "Pond", "Trough", "River"]
+BASE_BY_TYPE = {"Spring": 2.6, "Creek": 2.8, "Stream": 2.7, "Tank": 2.0, "Windmill": 1.9, "Cache": 1.6,
                 "Lake": 3.0, "Pond": 1.8, "Trough": 1.9, "River": 3.4}
 SEC_CDT = ["New Mexico", "Colorado", "Wyoming", "S. Montana / Idaho", "N. Montana"]
 YEAR_LABELS = ["≤2016"] + [str(y) for y in range(2017, 2027)]
@@ -108,15 +108,15 @@ def build_cdt():
     for i in range(1, n_pts):
         cum.append(cum[-1] + hav_mi(la[i - 1], lo[i - 1], la[i], lo[i]))
     total = cum[-1]
-    n_src = 54
+    n_src = 90
     miles = sorted(rnd.uniform(2, total - 2) for _ in range(n_src))
     n_bins = int(total // 50) + 1
     sec_len = total / 5
     wps, models, app_wp = [], [], []
-    vol_ix = set(rnd.sample(range(n_src), 6))
+    vol_ix = set(rnd.sample(range(n_src), 9))
     for i, mi in enumerate(miles):
         typ, name = source_name(i)
-        base = BASE_BY_TYPE[typ] + rnd.uniform(-0.5, 0.5)
+        base = BASE_BY_TYPE[typ] + 0.35 + rnd.uniform(-0.5, 0.5)
         m = make_source(grid, base, rnd.uniform(0.4, 1.4), rnd.uniform(0.15, 0.4), rnd.uniform(-0.3, 0.3))
         models.append(m)
         k = min(range(n_pts), key=lambda j: abs(cum[j] - mi))

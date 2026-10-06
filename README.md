@@ -10,7 +10,7 @@ Everything is plain HTML, CSS and JavaScript with no build step and no dependenc
 
 ## Template data only
 
-This repo ships **synthetic placeholder data**, not real trail data. Every source is named `Sample ...`, every number comes from a made-up smooth curve, and each page shows a "template data" notice. The modeling pipeline that produces real numbers is not part of this repo.
+This repo ships **synthetic placeholder data**, not real trail data. Every source is named `Sample ...`, every number comes from a made-up smooth curve, and each page shows a "template data" notice. The modeling pipeline that produces real numbers is not part of this repo. The waypoint optimizer is, and it runs on the template data out of the box.
 
 The data formats are documented in [`docs/DATA_FORMAT.md`](docs/DATA_FORMAT.md), and [`scripts/make_template_data.py`](scripts/make_template_data.py) regenerates the samples:
 
@@ -41,7 +41,19 @@ A service worker (the offline app) needs `localhost` or `https://`.
 | `azt-water/index.html`, `data.js` | Second explorer and its data |
 | `cdt-water-app/` | PWA: `index.html`, `app.js`, `sw.js`, `manifest.webmanifest`, icons, `data.json`, `bump-version.sh`, `.htaccess` |
 | `scripts/make_template_data.py` | Writes the synthetic sample data |
+| `optimizer/` | Picks a small set of water waypoints from `data.json` (dynamic programming), writes GPX/CSV for the splitter. See its README |
 | `docs/DATA_FORMAT.md` | Field-by-field data reference |
+
+## Waypoint optimizer
+
+`optimizer/waypoint_optimizer.py` chooses which sources to put on a watch: high chance of water, short carries, few points. It writes a GPX the [GPX course splitter](https://github.com/JKesslerPhD/gpx-course-splitter) can snap straight onto a route.
+
+```bash
+pip install numpy
+python3 optimizer/waypoint_optimizer.py
+```
+
+See [`optimizer/README.md`](optimizer/README.md) for the method and parameters.
 
 ## Embedding
 
