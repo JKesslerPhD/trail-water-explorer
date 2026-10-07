@@ -57,7 +57,23 @@ The minimum is found exactly by dynamic programming over pairs (previous point, 
 
 ## Parameters
 
-Every default lives in `DEFAULTS` at the top of `waypoint_optimizer.py` and is a command-line flag (`--wp-cost`, `--risk`, `--off-pen`, `--target`, `--mid`, `--far`, `--off-max`, `--min-conf`, ...).
+Every setting lives in the `Settings` class at the top of `waypoint_optimizer.py`, with its default and a one-line explanation, and is also a command-line flag (`--wp-cost`, `--risk`, `--off-pen`, `--target`, `--mid`, `--far`, `--off-max`, `--min-conf`, ...). `python3 optimizer/waypoint_optimizer.py --help` lists them all.
+
+## Reading the code
+
+`waypoint_optimizer.py` is one file, in the order you would read it. Each section has a comment block explaining what it does.
+
+| Section | What it holds |
+|:-|:-|
+| 1. Settings | Every tunable number, with its default and meaning |
+| 2. Loading the data | `RouteData` and `Source`: turns `data.json` into plain Python objects |
+| 3. Reliability | `reliability()`: chance a source has water when you arrive |
+| 4. Carry cost | `carry_cost()`: how bad a gap of N miles is (with a diagram) |
+| 5. The search | `build_nodes()`, `allowed_hops()`, `solve()`: the dynamic program, with a worked example in the comments |
+| 6. Writing results | Snapping to the route, names and descriptions, GPX and CSV output |
+| 7. Command line | Flags built from `Settings` |
+
+`compare_strategies.py` imports from it and is a good second read: it shows the optimizer next to two simple baselines.
 
 ## Limits
 
